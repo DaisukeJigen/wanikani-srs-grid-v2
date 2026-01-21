@@ -26,7 +26,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <Teleport to="#srsChangelog">
+  <Teleport to="#srsGridChangelog">
     <!-- <KofiDialog ref="kd"></KofiDialog> -->
     <Popover ref="kofi">
       <iframe
@@ -41,7 +41,7 @@ onMounted(() => {
       <Message v-if="visible">
         <div class="header">
           <div class="title">
-            <span>WaniKani SRS Grid has been updated</span>
+            <span>WaniKani SRS Grid V2 has been updated</span>
           </div>
           <div class="buttons">
             <Button @click="kofiToggle" outlined rounded>
@@ -96,4 +96,5 @@ onMounted(() => {
     }
   }
 }
+
 </style>

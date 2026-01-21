@@ -10,12 +10,16 @@ export const useChangelogStore = defineStore(
   'changelog',
   () => {
     // #region State
-    const currentVersion = ref(0.1),
+    const currentVersion = ref(0.2),
       lastLoadedVersion = ref(0),
       log = ref<iChange[]>([
         {
           changes: ['Updated to work with the new dashboard'],
           version: 0.1,
+        },
+        {
+          changes: ['Redo Settings'],
+          version: 0.2,
         },
       ]),
       showLog = ref(false),

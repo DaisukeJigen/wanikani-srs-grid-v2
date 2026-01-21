@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import Level from '@/components/Level.vue'
-import LevelStyleTwo from '@/components/LevelStyleTwo.vue'
+// import LevelStyleTwo from '@/components/LevelStyleTwo.vue'
 
 import { useIndexStore } from './stores'
 const indexStore = useIndexStore()
 import keys from 'lodash/keys'
-import { onMounted, computed, watch, nextTick } from 'vue'
+import { onMounted, computed, nextTick, ref } from 'vue'
 
 import { useSettingsStore } from './stores/settings'
 const settingsStore = useSettingsStore()
+import Settings from '@/components/Settings.vue'
+
 import { useItemsStore } from './stores/items'
 const itemsStore = useItemsStore()
 import flatten from 'lodash/flatten'
@@ -33,21 +35,25 @@ function addStyle(aCss: string) {
   return null
 }
 
-const columns = computed(() => {
-  let base = 5
-  if (wkof.settings == undefined) return base
-  if (wkof.settings.srsGrid.includeLocked) base++
-  if (wkof.settings.srsGrid.includeInitiate) base++
-  if (base == 7) return 4
-  if (base == 6) return 3
-  if (base == 5) return 5
-  return 5
-})
+// const columns = computed(() => {
+//   let base = 5
+//   if (wkof.settings == undefined) return base
+//   if (wkof.settings.srsGrid.includeLocked) base++
+//   if (wkof.settings.srsGrid.includeInitiate) base++
+//   if (base == 7) return 4
+//   if (base == 6) return 3
+//   if (base == 5) return 5
+//   return 5
+// })
+
+const settings = ref()
 
 const levelsToShow = computed(() => {
   let levels = keys(indexStore.levels)
-  if (!wkof.settings.srsGrid.includeLocked) levels = levels.filter((l: any) => l != 'locked')
-  if (!wkof.settings.srsGrid.includeInitiate) levels = levels.filter((l: any) => l != 'initiate')
+  // if (!wkof.settings.srsGrid.includeLocked) levels = levels.filter((l: any) => l != 'locked')
+  // if (!wkof.settings.srsGrid.includeInitiate) levels = levels.filter((l: any) => l != 'initiate')
+  levels = levels.filter((l: any) => l != 'locked')
+  if (!settingsStore.settings.initiate) levels = levels.filter((l: any) => l != 'initiate')
   return levels
 })
 
@@ -59,8 +65,8 @@ const stagesToShow = computed(() => {
   return stages
 })
 
-const xbd = computed(() => wkof.settings.srsGrid.extraBreakdown),
-  xbdStyle = computed(() => wkof.settings.srsGrid.extraBreakdownStyle)
+// const xbd = computed(() => wkof.settings.srsGrid.extraBreakdown),
+//   xbdStyle = computed(() => wkof.settings.srsGrid.extraBreakdownStyle)
 
 const waitForSRSLoaded = () => {
   if (document.querySelectorAll('.item-spread-table-row--loading').length == 0) {
@@ -95,7 +101,10 @@ onMounted(() => {
   nextTick(() => {
     wkof.include('Apiv2, ItemData, Menu, Settings')
     wkof.ready('Menu').then(settingsStore.installMenu)
-    wkof.ready('ItemData, Settings').then(settingsStore.installSettings).then(itemsStore.getItems)
+    wkof
+      .ready('ItemData, Settings')
+      //.then(settingsStore.installSettings)
+      .then(itemsStore.getItems)
     // .then(() => {
     //   debugger
     //   done.value = true
@@ -112,7 +121,7 @@ onMounted(() => {
         //TODO figure it out
         settingsStore
           .installMenu()
-          .then(settingsStore.installSettings)
+          //.then(settingsStore.installSettings)
           .then(itemsStore.getItems)
           .then(() => {
             waitForSRSLoaded()
@@ -162,14 +171,24 @@ onMounted(() => {
   indexStore.srsGridLoaded: {{ indexStore.srsGridLoaded }} -->
   <!-- TODO: for debugging -->
   <!--<test></test>-->
+  <!-- settingsStore.setting: {{ settingsStore.settings }} -->
   <template v-if="indexStore.srsGridLoaded">
     <Teleport defer to=".item-spread-table-widget__rows">
       <!-- xbd: {{ xbd }}<br />xbdStyle: {{ xbdStyle }} -->
-      <template v-if="settingsStore.loaded && itemsStore.itemsCount > 0">
-        <template v-if="(xbdStyle == 0 && xbd) || !xbd">
-          <Level v-for="l in levelsToShow" :level="l" :key="l" :xbd="xbd"></Level
+      <template v-if="itemsStore.itemsCount > 0">
+        <template
+          v-if="
+            settingsStore.settings.breakdownMode == 0 || settingsStore.settings.breakdownMode == 1
+          "
+        >
+          <Level
+            v-for="l in levelsToShow"
+            :level="l"
+            :key="l"
+            :xbd="settingsStore.settings.breakdownMode != 0"
+          ></Level
         ></template>
-        <template v-else-if="xbdStyle == 1 && xbd">
+        <template v-else-if="settingsStore.settings.breakdownMode == 2">
           <template v-for="(l, i) in levelsToShow" :key="i">
             <!--@vue-ignore-->
             <Level
@@ -193,6 +212,7 @@ onMounted(() => {
     </Teleport></template
   >
   <Changelog v-if="indexStore.srsGridLoaded"></Changelog>
+  <Settings ref="settings"></Settings>
 </template>
 
 <style>
@@ -210,5 +230,23 @@ onMounted(() => {
 .jigen .item-spread-table-row__total {
   min-width: 50px;
   width: unset;
+}
+
+#srsGridChangelog {
+  .p-message {
+    background: deeppink;
+    color: white;
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    .hidden {
+      display: none;
+    }
+    &-close-button {
+      position: relative;
+      top: -40px;
+      right: -25px;
+    }
+  }
 }
 </style>
